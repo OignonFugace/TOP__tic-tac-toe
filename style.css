@@ -79,6 +79,38 @@ select {
 /* CUSTOM PROPERTIES */
 
 /* SITE LAYOUT & GLOBAL STYLES */
+body {
+    font-family: monospace;
+    font-size: 2rem;
+    display: grid;
+    place-content: center;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    background-color: none;
+}
+
+#boardWrapper {
+    display: grid;
+    place-content: center;
+}
+
+#board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    grid-template-rows:  repeat(3, 1fr);
+    place-content: center;
+    background-color: black;
+    gap: 2px;
+}
+
+.cell {
+    width: 6rem;
+    height: 6rem;
+    background-color: white;
+}
 
 /* PAGE */
 
