@@ -8,9 +8,27 @@
     <title>Tic Tac Toe</title>
 </head>
 <body>
-    <div id="turn"></div>
-    <div id="boardWrapper">
-        <div id="board"></div>
+    <aside id="aside">
+        <form action="" id="formControl">
+            <div>
+                <label for="playerOneName">Player One Name: </label>
+                <input type="text" id="playerOneName" value="Player One" data-index="0">
+            </div>
+            <div>
+                <label for="playerTwoName">Player Two Name: </label>
+                <input type="text" id="playerTwoName" value="Player Two" data-index="1">
+            </div>
+        </form>
+    </aside>
+    <div id="main-wrapper">
+        <div id="turn"></div>
+        <div id="boardWrapper">
+            <div id="board"></div>
+        </div>
+        <button id="restartButton"></button>
+    </div>
+    <div id="credentialSection">
+        <p>This page was created as part of The Odin Project curriculum (<a href="https://www.theodinproject.com/lessons/node-path-javascript-library">Project: Library | The Odin Project</a>) by Tanguy Freycon : <a href="https://github.com/OignonFugace/TOP__tic-tac-toe">Visit Github Repository</a>.</p>
     </div>
 </body>
 </html>
