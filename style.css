@@ -117,6 +117,10 @@ form button {
     text-align: center;
 }
 
+.blur {
+    filter: blur(0.5rem);
+}
+
 #aside {
     padding: 1rem;
 }

@@ -123,23 +123,21 @@ function Cell() {
     const addToken = (playerToken) => {
         value = playerToken;
     };
-
+    
     return {
         getValue,
         addToken,
     }
 }
 
-const GameController = (function(
-    playerOneName = 'Player One',
-    playerTwoName = 'Player Two'
-) {
-
+const GameController = (function() {
     let players;
     let gameOver;
     let isTie;
     let activePlayer;
     let winningPlayer;
+    let paused;
+    let computerIsPlaying;
 
     const initializeGame = () => {
         if (SettingsController.state.playAgainstComputer) {
@@ -164,9 +162,15 @@ const GameController = (function(
         isTie = false;
         activePlayer = players[0];
         winningPlayer = undefined;
-    }
+        paused = false;
+        computerIsPlaying = false;
+    };
 
     initializeGame();
+
+    const pause = () => paused = true;
+    const resume = () => paused = false;
+    const getPausedState = () => paused;
 
     const switchPlayerTurn = () => {
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
@@ -176,6 +180,7 @@ const GameController = (function(
     const getGameOver = () => gameOver;
     const getIsTie = () => isTie;
     const getWinningPlayer = () => winningPlayer;
+    const getComputerIsPlaying = () => computerIsPlaying;
 
     const updatePlayerName = (playerIndex, newName) => {
         players[playerIndex].updateName(newName);
@@ -219,6 +224,10 @@ const GameController = (function(
 
     const playRound = (row, col) => {
 
+        if (paused) {
+            return;
+        }
+
         if (row < 0 || row > 2 || col < 0 || col > 2) {
             return;
         } else if (GameBoard.getBoard()[row][col].getValue()) {
@@ -243,12 +252,15 @@ const GameController = (function(
         switchPlayerTurn();
 
         if (activePlayer.getType() === 'computer') {
+            computerIsPlaying = true;
+            pause();
             setTimeout(playComputerRound, 800);
         }
     };
 
     const playComputerRound = () => {
-        console.log('Computer is playing.');
+        resume();
+        computerIsPlaying = false;
         switchPlayerTurn();
         ScreenController.updateScreen();
     };
@@ -258,7 +270,6 @@ const GameController = (function(
         if (winningPlayer) winningPlayer.resetWinningState();
         initializeGame();
     }
-
     return {
         playRound,
         getActivePlayer,
@@ -267,6 +278,10 @@ const GameController = (function(
         getWinningPlayer,
         updatePlayerName,
         resetGame,
+        pause,
+        resume,
+        getPausedState,
+        getComputerIsPlaying,
     };
 })();
 
@@ -277,9 +292,22 @@ const ScreenController = (function() {
     const settingPanel = document.querySelector('#settingPanel');; 
     const playAgainButton = document.querySelector("#playAgainButton");
 
+    function blurBoard() {
+        document.querySelector('#main-wrapper').classList.add('blur');
+    }
+    function unblurBoard() {
+        document.querySelector('#main-wrapper').classList.remove('blur');
+    }
+
     const updateScreen = () => {
         boardDiv.textContent = '';
         playAgainButton.className = "button-hidden";
+
+        if (GameController.getPausedState() && !GameController.getComputerIsPlaying()) {
+            blurBoard();
+        } else {
+            unblurBoard();
+        }
 
         const activePlayer = GameController.getActivePlayer();
         if (GameController.getWinningPlayer()) {
@@ -372,6 +400,14 @@ const ScreenController = (function() {
         }
         const saveButton = createSaveButton('saveButton');
         settingPanel.appendChild(saveButton);
+
+        const inputList = document.querySelectorAll('input');
+        Array.from(inputList).forEach(input => {
+            input.addEventListener('focus', () => {
+                GameController.pause();
+                updateScreen();
+            });
+        })
     };
 
     const clickHandlerButton = (e) => {
@@ -379,6 +415,7 @@ const ScreenController = (function() {
             const row = e.target.dataset.row;
             const col = e.target.dataset.col;
             GameController.playRound(row, col);
+            console.dir(e.target.dataset.isClickable);
             updateScreen();
         } else {
 
@@ -394,9 +431,15 @@ const ScreenController = (function() {
     const submitFormHandler = (e) => {
         e.preventDefault();
         SettingsController.state.playAgainstComputer = e.target.playAgainstComputerCheckbox.checked;
-        SettingsController.state.playerOneName = e.target.playerOneName.value;
-        SettingsController.state.playerTwoName = e.target.playerTwoName.value;
+        if (SettingsController.state.playAgainstComputer) {
+            SettingsController.state.playerName = e.target.playerName.value || 'Player';
+        } else {
+            SettingsController.state.playerOneName = e.target.playerOneName.value || 'Player One';
+            SettingsController.state.playerTwoName = e.target.playerTwoName.value || 'Player Two';
+        }
         GameController.resetGame();
+        GameController.resume();
+        console.log(GameController.getPausedState());
         updateFormScreen();
         updateScreen();
     };
