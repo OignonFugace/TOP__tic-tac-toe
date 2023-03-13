@@ -18,9 +18,20 @@ const GameBoard = (function() {
 
     const getBoard = () => board;
 
+    const isFull = () => {
+        let result = true;
+        board.forEach(row => {
+            row.forEach(cell => {
+                result = result && cell.getValue();
+            })
+        })
+        return result;
+    };
+
     return {
         getBoard,
         printBoard,
+        isFull,
     };
 
 })()
@@ -74,6 +85,7 @@ const GameController = (function(
     ];
 
     let gameOver = false;
+    let isTie = false;
     let activePlayer = players[0];
     let winningPlayer;
 
@@ -83,15 +95,11 @@ const GameController = (function(
 
     const getActivePlayer = () => activePlayer;
     const getGameOver = () => gameOver;
+    const getIsTie = () => isTie;
     const getWinningPlayer = () => winningPlayer;
 
     const updatePlayerName = (playerIndex, newName) => {
         players[playerIndex].updateName(newName);
-    };
-
-    const printNewRound = () => {
-        console.log(GameBoard.printBoard());
-        console.log(`${activePlayer.getName()}'s turn.'`)
     };
 
     const updatePlayerWinState = () => {
@@ -137,33 +145,32 @@ const GameController = (function(
     const playRound = (row, col) => {
 
         if (row < 0 || row > 2 || col < 0 || col > 2) {
-            console.log('Input out of range');
             return;
         } else if (GameBoard.getBoard()[row][col].getValue()) {
-            console.log('Input already taken');
             return;
         }
 
-        console.log(`${activePlayer.getName()} tiks ${row + 1}'s row and ${col + 1}'s column.`);
         GameBoard.getBoard()[row][col].addToken(activePlayer.getToken());
 
         updatePlayerWinState();
 
         if (activePlayer.getIsWinner()) {
-            console.log(`${activePlayer.getName()} Wins!`);
             return;
         }
 
-        switchPlayerTurn();
-        printNewRound();
-    };
+        if (!winningPlayer && GameBoard.isFull()) {
+            isTie = true;
+            return
+        }
 
-    printNewRound();
+        switchPlayerTurn();
+    };
 
     return {
         playRound,
         getActivePlayer,
         getGameOver,
+        getIsTie,
         getWinningPlayer,
         updatePlayerName,
     };
@@ -182,6 +189,8 @@ const ScreenController = (function() {
         const activePlayer = GameController.getActivePlayer();
         if (GameController.getGameOver()) {
             playerTurnDiv.textContent = `${GameController.getWinningPlayer().getName()} Wins!`;
+        } else if (GameController.getIsTie()) {
+            playerTurnDiv.textContent = "It's a tie";
         } else {
             playerTurnDiv.textContent = `${activePlayer.getName()}'s turn.`;
         };
@@ -198,14 +207,12 @@ const ScreenController = (function() {
                 boardDiv.appendChild(cellButton);
             })
         })
-
     };
 
     const clickHandlerButton = (e) => {
         if (!GameController.getGameOver()) {
             const row = e.target.dataset.row;
             const col = e.target.dataset.col;
-            console.log({row, col});
             GameController.playRound(row, col);
             updateScreen();
         } else {
