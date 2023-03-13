@@ -85,12 +85,12 @@ select {
     --bg-clr: var(--light-clr)
 }
 
-@media (prefers-color-scheme: dark) {
-    :root {
-        --text-clr: var(--light-clr);
-        --bg-clr: var(--dark-clr);
-    }
-}
+/* @media (prefers-color-scheme: dark) { */
+/*     :root { */
+/*         --text-clr: var(--light-clr); */
+/*         --bg-clr: var(--dark-clr); */
+/*     } */
+/* } */
 
 /* SITE LAYOUT & GLOBAL STYLES */
 body {

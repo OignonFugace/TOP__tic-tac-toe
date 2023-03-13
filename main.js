@@ -325,15 +325,15 @@ const ScreenController = (function() {
     };
     boardDiv.addEventListener('click', clickHandlerButton);
 
-    // const changePlayerNameHandler = (e) => {
-    //     GameController.updatePlayerName(e.target.dataset.index, e.target.value);
-    //     if (!e.target.value) {
-    //         GameController.updatePlayerName(
-    //             e.target.dataset.index, 
-    //             e.target.dataset.index === '0' ? 'Player One' : 'Player Two')
-    //     }
-    //     updateScreen();
-    // };
+    const changePlayerNameHandler = (e) => {
+        GameController.updatePlayerName(e.target.dataset.index, e.target.value);
+        if (!e.target.value) {
+            GameController.updatePlayerName(
+                e.target.dataset.index, 
+                e.target.dataset.index === '0' ? 'Player One' : 'Player Two')
+        }
+        updateScreen();
+    };
 
     const playAgainButtonHandler = () => {
         GameController.resetGame();
@@ -353,6 +353,7 @@ const ScreenController = (function() {
     // playerTwoNameControl.addEventListener('input', changePlayerNameHandler);
     playAgainButton.addEventListener('click', playAgainButtonHandler);
     settingPanel.addEventListener('submit', submitFormHandler);
+    settingPanel.addEventListener('submit', changePlayerNameHandler);
 
     updateScreen();
     updateFormScreen();
