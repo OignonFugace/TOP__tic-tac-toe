@@ -105,6 +105,7 @@ body {
 #main-wrapper {
     place-self: center;
     font-size: 2rem;
+    text-align: center;
 }
 
 #aside {
@@ -140,8 +141,16 @@ button {
     color: var(--text-clr);
 }
 
-#restartButton {
-    display: none;
+#playAgainButton {
+    margin-top: 1rem;
+}
+
+.button-hidden {
+    visibility: hidden;
+}
+
+.button-visible {
+    visibility: visible;
 }
 
 #credentialSection {

@@ -22,14 +22,23 @@ const GameBoard = (function() {
         let result = true;
         board.forEach(row => {
             row.forEach(cell => {
-                result = result && cell.getValue();
+                result = result && !!cell.getValue();
             })
         })
         return result;
     };
 
+    const clearBoard = () => {
+        board.forEach(row => {
+            row.forEach(cell => {
+                cell.addToken(0);
+            })
+        })
+    };
+
     return {
         getBoard,
+        clearBoard,
         printBoard,
         isFull,
     };
@@ -50,12 +59,15 @@ function Player(name, token) {
         name = newName;  
     };
 
+    const resetWinningState = () => isWinner = false;
+
     return {
         getName,
         updateName,
         getToken,
         getIsWinner,
         wins,
+        resetWinningState,
     }
 }
 
@@ -87,7 +99,7 @@ const GameController = (function(
     let gameOver = false;
     let isTie = false;
     let activePlayer = players[0];
-    let winningPlayer;
+    let winningPlayer = undefined;
 
     const switchPlayerTurn = () => {
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
@@ -111,7 +123,6 @@ const GameController = (function(
                 row[1].getValue() === row[2].getValue()) {
                 activePlayer.wins();
                 winningPlayer = activePlayer;
-                gameOver = true
                 return;
             } 
         });
@@ -121,7 +132,6 @@ const GameController = (function(
                 board[1][i].getValue() === board[2][i].getValue()) {
                 activePlayer.wins();
                 winningPlayer = activePlayer;
-                gameOver = true;
                 return;
             }
         }
@@ -130,14 +140,12 @@ const GameController = (function(
             board[1][1].getValue() === board[2][2].getValue()) {
             activePlayer.wins();
             winningPlayer = activePlayer;
-            gameOver = true;
             return;
         } else if (token === board[0][2].getValue() &&
             board[0][2].getValue() === board[1][1].getValue() &&
             board[1][1].getValue() === board[2][0].getValue()) {
             activePlayer.wins();
             winningPlayer = activePlayer;
-            gameOver = true;
             return;
         }
     };
@@ -155,16 +163,27 @@ const GameController = (function(
         updatePlayerWinState();
 
         if (activePlayer.getIsWinner()) {
+            gameOver = true;
             return;
         }
 
         if (!winningPlayer && GameBoard.isFull()) {
             isTie = true;
+            gameOver = true;
             return
         }
 
         switchPlayerTurn();
     };
+
+    const resetGame = () => {
+        GameBoard.clearBoard();
+        if (winningPlayer) winningPlayer.resetWinningState();
+        gameOver = false;
+        isTie = false;
+        activePlayer = players[0];
+        winningPlayer = undefined;
+    }
 
     return {
         playRound,
@@ -173,6 +192,7 @@ const GameController = (function(
         getIsTie,
         getWinningPlayer,
         updatePlayerName,
+        resetGame,
     };
 })();
 
@@ -182,12 +202,14 @@ const ScreenController = (function() {
     const boardDiv = document.querySelector('#board');
     const playerOneNameControl = document.querySelector("#playerOneName");
     const playerTwoNameControl = document.querySelector("#playerTwoName");
+    const playAgainButton = document.querySelector("#playAgainButton");
 
     const updateScreen = () => {
         boardDiv.textContent = '';
+        playAgainButton.className = "button-hidden";
 
         const activePlayer = GameController.getActivePlayer();
-        if (GameController.getGameOver()) {
+        if (GameController.getWinningPlayer()) {
             playerTurnDiv.textContent = `${GameController.getWinningPlayer().getName()} Wins!`;
         } else if (GameController.getIsTie()) {
             playerTurnDiv.textContent = "It's a tie";
@@ -206,7 +228,11 @@ const ScreenController = (function() {
                     'o';
                 boardDiv.appendChild(cellButton);
             })
-        })
+        });
+
+        if (GameController.getGameOver()) {
+            playAgainButton.className = 'button-visible';
+        }
     };
 
     const clickHandlerButton = (e) => {
@@ -232,6 +258,12 @@ const ScreenController = (function() {
     };
     playerOneNameControl.addEventListener('input', changePlayerNameHandler);
     playerTwoNameControl.addEventListener('input', changePlayerNameHandler);
+
+    const playAgainButtonHandler = () => {
+        GameController.resetGame();
+        updateScreen();
+    };
+    playAgainButton.addEventListener('click', playAgainButtonHandler);
 
     updateScreen();
 })();
