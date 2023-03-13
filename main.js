@@ -447,6 +447,7 @@ const ScreenController = (function() {
     playAgainButton.addEventListener('click', playAgainButtonHandler);
     settingPanel.addEventListener('submit', submitFormHandler);
 
+    GameController.pause();
     updateScreen();
     updateFormScreen();
 
