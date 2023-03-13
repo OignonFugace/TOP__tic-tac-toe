@@ -102,6 +102,14 @@ body {
     color: var(--text-clr);
 }
 
+form header h1 {
+    font-size: 1rem;
+}
+
+form button {
+    margin-top: 1rem;
+}
+
 #main-wrapper {
     place-self: center;
     font-size: 2rem;

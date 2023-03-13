@@ -197,11 +197,25 @@ const GameController = (function(
 })();
 
 
+const FormController = (function (){
+    const state = {
+        playAgainstComputer: false,
+        playerOneName: '',
+        playerTwoName: '',
+    };
+
+    return {
+        state,
+    };
+})();
+
+
 const ScreenController = (function() {
     const playerTurnDiv = document.querySelector('#turn');
     const boardDiv = document.querySelector('#board');
-    const playerOneNameControl = document.querySelector("#playerOneName");
-    const playerTwoNameControl = document.querySelector("#playerTwoName");
+    const settingPanel = document.querySelector('#settingPanel');; 
+    // const playerOneNameControl = document.querySelector("#playerOneName");
+    // const playerTwoNameControl = document.querySelector("#playerTwoName");
     const playAgainButton = document.querySelector("#playAgainButton");
 
     const updateScreen = () => {
@@ -235,6 +249,70 @@ const ScreenController = (function() {
         }
     };
 
+    const updateFormScreen = () => {
+        settingPanel.innerHTML = '';
+
+        const createCheckboxDiv = (checked) => {
+            const checkbox = document.createElement('input');
+            checkbox.setAttribute('type', 'checkbox');
+            checkbox.id = 'playAgainstComputerCheckbox';
+            checkbox.checked = checked;
+            checkbox.onchange = (e) => {
+                FormController.state.playAgainstComputer = e.target.checked;
+                updateFormScreen();
+            };
+            const label = document.createElement('label');
+            label.textContent = 'Play against the computer';
+            label.setAttribute('for', 'playAgainstComputerCheckbox');
+            const div = document.createElement('div')
+            div.appendChild(checkbox);
+            div.appendChild(label);
+            return div;
+        };
+
+        const createPlayerInput = (inputId) => {
+            const label = document.createElement('label');
+            label.setAttribute('for', inputId);
+            label.textContent = inputId === 'playerOneName' ? 'Player One Name: ' :
+                                inputId === 'playerTwoName' ? 'Player Two Name: ' :
+                                'Player Name: ';
+            const input = document.createElement('input');
+            input.setAttribute('type', 'text');
+            input.setAttribute('data-index', inputId === 'playerTwoName' ? '2' : '1');
+            input.id = inputId;
+            const div = document.createElement('div');
+            div.appendChild(label);
+            div.appendChild(input);
+            return div;
+        };
+
+        const createSaveButton = (id) => {
+            const button = document.createElement('button');
+            button.textContent = 'Save and Play';
+            button.setAttribute('type', 'submit');
+            button.id = id;
+            return button
+        };
+
+        const formHeader = document.createElement('header');
+        formHeader.innerHTML = '<h1>Game Settings: </h1>';
+        settingPanel.appendChild(formHeader);
+        const checkboxDiv = createCheckboxDiv(FormController.state.playAgainstComputer);
+        settingPanel.appendChild(checkboxDiv);
+        if (!FormController.state.playAgainstComputer) {
+            const playerOneInputDiv = createPlayerInput('playerOneName');
+            const playerTwoInputDiv = createPlayerInput('playerTwoName');
+            settingPanel.appendChild(playerOneInputDiv);
+            settingPanel.appendChild(playerTwoInputDiv);
+        } else {
+            const playerOneInputDiv = createPlayerInput('playerName');
+            settingPanel.appendChild(checkboxDiv);
+            settingPanel.appendChild(playerOneInputDiv);
+        }
+        const saveButton = createSaveButton('saveButton');
+        settingPanel.appendChild(saveButton);
+    };
+
     const clickHandlerButton = (e) => {
         if (!GameController.getGameOver()) {
             const row = e.target.dataset.row;
@@ -247,24 +325,36 @@ const ScreenController = (function() {
     };
     boardDiv.addEventListener('click', clickHandlerButton);
 
-    const changePlayerNameHandler = (e) => {
-        GameController.updatePlayerName(e.target.dataset.index, e.target.value);
-        if (!e.target.value) {
-            GameController.updatePlayerName(
-                e.target.dataset.index, 
-                e.target.dataset.index === '0' ? 'Player One' : 'Player Two')
-        }
-        updateScreen();
-    };
-    playerOneNameControl.addEventListener('input', changePlayerNameHandler);
-    playerTwoNameControl.addEventListener('input', changePlayerNameHandler);
+    // const changePlayerNameHandler = (e) => {
+    //     GameController.updatePlayerName(e.target.dataset.index, e.target.value);
+    //     if (!e.target.value) {
+    //         GameController.updatePlayerName(
+    //             e.target.dataset.index, 
+    //             e.target.dataset.index === '0' ? 'Player One' : 'Player Two')
+    //     }
+    //     updateScreen();
+    // };
 
     const playAgainButtonHandler = () => {
         GameController.resetGame();
         updateScreen();
     };
+
+    const submitFormHandler = (e) => {
+        e.preventDefault();
+        console.dir(e.target);
+        FormController.state.playAgainstComputer = e.target.playAgainstComputer.checked;
+        FormController.state.playerOneName = e.target.playerOneName.value;
+        FormController.state.playerTwoName = e.target.playerTwoName.value;
+        updateFormScreen();
+    };
+
+    // playerOneNameControl.addEventListener('input', changePlayerNameHandler);
+    // playerTwoNameControl.addEventListener('input', changePlayerNameHandler);
     playAgainButton.addEventListener('click', playAgainButtonHandler);
+    settingPanel.addEventListener('submit', submitFormHandler);
 
     updateScreen();
+    updateFormScreen();
 })();
 
