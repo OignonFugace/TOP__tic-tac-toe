@@ -1,3 +1,16 @@
+const SettingsController = (function (){
+    const state = {
+        playAgainstComputer: false,
+        playerOneName: 'Player One',
+        playerTwoName: 'Player Two',
+        playerName: 'Player',
+    };
+
+    return {
+        state,
+    };
+})();
+
 
 const GameBoard = (function() {
     const rows = 3;
@@ -43,32 +56,63 @@ const GameBoard = (function() {
         isFull,
     };
 
-})()
+})();
 
-function Player(name, token) {
 
-    const getName = () => name;
-    const getToken = () => token;
+function PlayerBase() {
     let isWinner = false;
 
     const getIsWinner = () => isWinner;
 
     const wins = () => isWinner = true;
 
-    const updateName = (newName) => {
-        name = newName;  
-    };
-
     const resetWinningState = () => isWinner = false;
 
     return {
-        getName,
-        updateName,
-        getToken,
         getIsWinner,
         wins,
         resetWinningState,
     }
+}
+
+function ComputerBot() {
+
+    const prototype = PlayerBase();
+
+    const name = 'Computer';
+    const type = 'computer';
+    const token = 2;
+
+    const getName = () => name;
+    const getToken = () => token;
+    const getType = () => type;
+
+    return Object.assign({
+        getName,
+        getToken,
+        getType,
+    }, prototype);
+}
+
+function Player(name, token) {
+
+    const prototype = PlayerBase();
+    const type = 'player';
+
+    const getName = () => name;
+    const getToken = () => token;
+    const getType = () => type;
+
+    const updateName = (newName) => {
+        name = newName;  
+    };
+
+    return Object.assign({
+        updateName,
+        getName,
+        getToken,
+        getType,
+    }, prototype);
 }
 
 function Cell() {
@@ -91,15 +135,38 @@ const GameController = (function(
     playerTwoName = 'Player Two'
 ) {
 
-    const players = [
-        Player(playerOneName, 1),
-        Player(playerTwoName, 2)
-    ];
+    let players;
+    let gameOver;
+    let isTie;
+    let activePlayer;
+    let winningPlayer;
 
-    let gameOver = false;
-    let isTie = false;
-    let activePlayer = players[0];
-    let winningPlayer = undefined;
+    const initializeGame = () => {
+        if (SettingsController.state.playAgainstComputer) {
+            players = [
+                Player(
+                    playerOneName = SettingsController.state.playerName, 
+                    1),
+                ComputerBot(),
+            ];
+        } else {
+            players = [
+                Player(
+                    playerOneName = SettingsController.state.playerOneName, 
+                    1),
+                Player(
+                    playerTwoName = SettingsController.state.playerTwoName, 
+                    2),
+            ];
+        }
+
+        gameOver = false;
+        isTie = false;
+        activePlayer = players[0];
+        winningPlayer = undefined;
+    }
+
+    initializeGame();
 
     const switchPlayerTurn = () => {
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
@@ -174,15 +241,22 @@ const GameController = (function(
         }
 
         switchPlayerTurn();
+
+        if (activePlayer.getType() === 'computer') {
+            setTimeout(playComputerRound, 800);
+        }
+    };
+
+    const playComputerRound = () => {
+        console.log('Computer is playing.');
+        switchPlayerTurn();
+        ScreenController.updateScreen();
     };
 
     const resetGame = () => {
         GameBoard.clearBoard();
         if (winningPlayer) winningPlayer.resetWinningState();
-        gameOver = false;
-        isTie = false;
-        activePlayer = players[0];
-        winningPlayer = undefined;
+        initializeGame();
     }
 
     return {
@@ -197,25 +271,10 @@ const GameController = (function(
 })();
 
 
-const FormController = (function (){
-    const state = {
-        playAgainstComputer: false,
-        playerOneName: '',
-        playerTwoName: '',
-    };
-
-    return {
-        state,
-    };
-})();
-
-
 const ScreenController = (function() {
     const playerTurnDiv = document.querySelector('#turn');
     const boardDiv = document.querySelector('#board');
     const settingPanel = document.querySelector('#settingPanel');; 
-    // const playerOneNameControl = document.querySelector("#playerOneName");
-    // const playerTwoNameControl = document.querySelector("#playerTwoName");
     const playAgainButton = document.querySelector("#playAgainButton");
 
     const updateScreen = () => {
@@ -258,8 +317,10 @@ const ScreenController = (function() {
             checkbox.id = 'playAgainstComputerCheckbox';
             checkbox.checked = checked;
             checkbox.onchange = (e) => {
-                FormController.state.playAgainstComputer = e.target.checked;
+                SettingsController.state.playAgainstComputer = e.target.checked;
+                GameController.resetGame();
                 updateFormScreen();
+                updateScreen();
             };
             const label = document.createElement('label');
             label.textContent = 'Play against the computer';
@@ -297,9 +358,9 @@ const ScreenController = (function() {
         const formHeader = document.createElement('header');
         formHeader.innerHTML = '<h1>Game Settings: </h1>';
         settingPanel.appendChild(formHeader);
-        const checkboxDiv = createCheckboxDiv(FormController.state.playAgainstComputer);
+        const checkboxDiv = createCheckboxDiv(SettingsController.state.playAgainstComputer);
         settingPanel.appendChild(checkboxDiv);
-        if (!FormController.state.playAgainstComputer) {
+        if (!SettingsController.state.playAgainstComputer) {
             const playerOneInputDiv = createPlayerInput('playerOneName');
             const playerTwoInputDiv = createPlayerInput('playerTwoName');
             settingPanel.appendChild(playerOneInputDiv);
@@ -325,16 +386,6 @@ const ScreenController = (function() {
     };
     boardDiv.addEventListener('click', clickHandlerButton);
 
-    const changePlayerNameHandler = (e) => {
-        GameController.updatePlayerName(e.target.dataset.index, e.target.value);
-        if (!e.target.value) {
-            GameController.updatePlayerName(
-                e.target.dataset.index, 
-                e.target.dataset.index === '0' ? 'Player One' : 'Player Two')
-        }
-        updateScreen();
-    };
-
     const playAgainButtonHandler = () => {
         GameController.resetGame();
         updateScreen();
@@ -342,20 +393,22 @@ const ScreenController = (function() {
 
     const submitFormHandler = (e) => {
         e.preventDefault();
-        console.dir(e.target);
-        FormController.state.playAgainstComputer = e.target.playAgainstComputer.checked;
-        FormController.state.playerOneName = e.target.playerOneName.value;
-        FormController.state.playerTwoName = e.target.playerTwoName.value;
+        SettingsController.state.playAgainstComputer = e.target.playAgainstComputerCheckbox.checked;
+        SettingsController.state.playerOneName = e.target.playerOneName.value;
+        SettingsController.state.playerTwoName = e.target.playerTwoName.value;
+        GameController.resetGame();
         updateFormScreen();
+        updateScreen();
     };
 
-    // playerOneNameControl.addEventListener('input', changePlayerNameHandler);
-    // playerTwoNameControl.addEventListener('input', changePlayerNameHandler);
     playAgainButton.addEventListener('click', playAgainButtonHandler);
     settingPanel.addEventListener('submit', submitFormHandler);
-    settingPanel.addEventListener('submit', changePlayerNameHandler);
 
     updateScreen();
     updateFormScreen();
+
+    return {
+        updateScreen,
+    }
 })();
 
