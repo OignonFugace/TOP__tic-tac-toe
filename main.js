@@ -1,4 +1,6 @@
+// SettingsController manages the game settings
 const SettingsController = (function (){
+    // State holds the settings' values
     const state = {
         playAgainstComputer: false,
         playerOneName: 'Player One',
@@ -12,11 +14,14 @@ const SettingsController = (function (){
 })();
 
 
+// GameBoard manages the game board
 const GameBoard = (function() {
+    // Initialize the board dimensions and the board itself
     const rows = 3;
     const cols = 3;
     const board = [];
 
+    // Create the board with empty cells
     for (let i = 0 ; i < rows ; i++) {
         board[i] = [];
         for (let j = 0 ; j < cols ; j++) {
@@ -24,13 +29,16 @@ const GameBoard = (function() {
         }
     };
 
+    // Print the board values
     const printBoard = () => {
         const boardWithCellValue = board.map((row) => row.map((cell) => cell.getValue()));
         return boardWithCellValue;
     };
 
+    // Get the board state
     const getBoard = () => board;
 
+    // Check if the board is full
     const isFull = () => {
         let result = true;
         board.forEach(row => {
@@ -41,6 +49,7 @@ const GameBoard = (function() {
         return result;
     };
 
+    // Clear the board by resetting all cells
     const clearBoard = () => {
         board.forEach(row => {
             row.forEach(cell => {
@@ -59,13 +68,18 @@ const GameBoard = (function() {
 })();
 
 
+// PlayerBase provides the common functionality for human and computer players
 function PlayerBase() {
+    // Initialize the player's winning state
     let isWinner = false;
 
+    // Get the winning state of the player
     const getIsWinner = () => isWinner;
 
+    // Mark the player as a winner
     const wins = () => isWinner = true;
 
+    // Reset the player's winning state
     const resetWinningState = () => isWinner = false;
 
     return {
@@ -75,14 +89,18 @@ function PlayerBase() {
     }
 }
 
-function ComputerBot() {
 
+// ComputerBot represents the computer player
+function ComputerBot() {
+    // Inherit the base player functionality
     const prototype = PlayerBase();
 
+    // Define computer player properties
     const name = 'Computer';
     const type = 'computer';
     const token = 2;
 
+    // Getters for computer player properties
     const getName = () => name;
     const getToken = () => token;
     const getType = () => type;
@@ -94,15 +112,19 @@ function ComputerBot() {
     }, prototype);
 }
 
-function Player(name, token) {
 
+// Player represents a human player
+function Player(name, token) {
+    // Inherit the base player functionality
     const prototype = PlayerBase();
     const type = 'player';
 
+    // Getters for player properties
     const getName = () => name;
     const getToken = () => token;
     const getType = () => type;
 
+    // Update the player's name
     const updateName = (newName) => {
         name = newName;  
     };
@@ -115,11 +137,16 @@ function Player(name, token) {
     }, prototype);
 }
 
+
+// Cell represents a single cell on the game
 function Cell() {
+    // Initialize the cell's value
     let value = 0;
 
+    // Get the cell's value
     const getValue = () => value;
 
+    // Add a token to the cell
     const addToken = (playerToken) => {
         value = playerToken;
     };
@@ -130,6 +157,8 @@ function Cell() {
     }
 }
 
+
+// GameController manages the game logic
 const GameController = (function() {
     let players;
     let gameOver;
@@ -172,6 +201,7 @@ const GameController = (function() {
     const resume = () => paused = false;
     const getPausedState = () => paused;
 
+    // Switch the current player
     const switchPlayerTurn = () => {
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
     };
@@ -259,9 +289,27 @@ const GameController = (function() {
     };
 
     const playComputerRound = () => {
-        resume();
         computerIsPlaying = false;
-        switchPlayerTurn();
+        resume();
+
+        // Get the board and find empty cells
+        const board = GameBoard.getBoard();
+        const emptyCells = [];
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                if (board[i][j].getValue() === 0) {
+                    emptyCells.push({ row: i, col: j });
+                }
+            }
+        }
+
+        // Choose a random empty cell for the computer's move
+        if (emptyCells.length > 0) {
+            const randomIndex = Math.floor(Math.random() * emptyCells.length);
+            const randomMove = emptyCells[randomIndex];
+            playRound(randomMove.row, randomMove.col);
+        }
+
         ScreenController.updateScreen();
     };
 
