@@ -1,6 +1,8 @@
-// SettingsController manages the game settings
+/* The game starts by initializing the game and updating the screen. Players take turns placing tokens on the board until one of them wins or the board is full, resulting in a tie. The game can be played against a computer, which makes random moves. */
+
+
+/* SettingsController: Manages the game settings and holds the state for the settings' values, such as player names and whether the game is played against a computer. */
 const SettingsController = (function (){
-    // State holds the settings' values
     const state = {
         playAgainstComputer: false,
         playerOneName: 'Player One',
@@ -13,15 +15,12 @@ const SettingsController = (function (){
     };
 })();
 
-
-// GameBoard manages the game board
+/* GameBoard: Manages the game board, including creating the board with empty cells, printing the board values, checking if the board is full, and clearing the board. */
 const GameBoard = (function() {
-    // Initialize the board dimensions and the board itself
     const rows = 3;
     const cols = 3;
     const board = [];
 
-    // Create the board with empty cells
     for (let i = 0 ; i < rows ; i++) {
         board[i] = [];
         for (let j = 0 ; j < cols ; j++) {
@@ -29,16 +28,13 @@ const GameBoard = (function() {
         }
     };
 
-    // Print the board values
     const printBoard = () => {
         const boardWithCellValue = board.map((row) => row.map((cell) => cell.getValue()));
         return boardWithCellValue;
     };
 
-    // Get the board state
     const getBoard = () => board;
 
-    // Check if the board is full
     const isFull = () => {
         let result = true;
         board.forEach(row => {
@@ -49,7 +45,6 @@ const GameBoard = (function() {
         return result;
     };
 
-    // Clear the board by resetting all cells
     const clearBoard = () => {
         board.forEach(row => {
             row.forEach(cell => {
@@ -68,18 +63,14 @@ const GameBoard = (function() {
 })();
 
 
-// PlayerBase provides the common functionality for human and computer players
+/* PlayerBase: Provides common functionality for human and computer players, including getting and setting the winning state. */
 function PlayerBase() {
-    // Initialize the player's winning state
     let isWinner = false;
 
-    // Get the winning state of the player
     const getIsWinner = () => isWinner;
 
-    // Mark the player as a winner
     const wins = () => isWinner = true;
 
-    // Reset the player's winning state
     const resetWinningState = () => isWinner = false;
 
     return {
@@ -90,17 +81,14 @@ function PlayerBase() {
 }
 
 
-// ComputerBot represents the computer player
+/* ComputerBot: Represents the computer player and inherits the base player functionality. It defines the computer player properties like name, type, and token. */
 function ComputerBot() {
-    // Inherit the base player functionality
     const prototype = PlayerBase();
 
-    // Define computer player properties
     const name = 'Computer';
     const type = 'computer';
     const token = 2;
 
-    // Getters for computer player properties
     const getName = () => name;
     const getToken = () => token;
     const getType = () => type;
@@ -113,18 +101,15 @@ function ComputerBot() {
 }
 
 
-// Player represents a human player
+/* Player: Represents a human player and inherits the base player functionality. It allows for updating the player's name and getting player properties like name, token, and type. */
 function Player(name, token) {
-    // Inherit the base player functionality
     const prototype = PlayerBase();
     const type = 'player';
 
-    // Getters for player properties
     const getName = () => name;
     const getToken = () => token;
     const getType = () => type;
 
-    // Update the player's name
     const updateName = (newName) => {
         name = newName;  
     };
@@ -138,15 +123,12 @@ function Player(name, token) {
 }
 
 
-// Cell represents a single cell on the game
+/* Cell: Represents a single cell on the game board. It initializes the cell's value and provides methods to get the cell's value and add a token to the cell. */
 function Cell() {
-    // Initialize the cell's value
     let value = 0;
 
-    // Get the cell's value
     const getValue = () => value;
 
-    // Add a token to the cell
     const addToken = (playerToken) => {
         value = playerToken;
     };
@@ -158,7 +140,7 @@ function Cell() {
 }
 
 
-// GameController manages the game logic
+/* GameController: Manages the game logic, including initializing the game, switching player turns, updating player win state, playing a round, and resetting the game. It also handles computer player moves. */
 const GameController = (function() {
     let players;
     let gameOver;
@@ -201,7 +183,6 @@ const GameController = (function() {
     const resume = () => paused = false;
     const getPausedState = () => paused;
 
-    // Switch the current player
     const switchPlayerTurn = () => {
         activePlayer = activePlayer === players[0] ? players[1] : players[0];
     };
@@ -292,7 +273,6 @@ const GameController = (function() {
         computerIsPlaying = false;
         resume();
 
-        // Get the board and find empty cells
         const board = GameBoard.getBoard();
         const emptyCells = [];
         for (let i = 0; i < board.length; i++) {
@@ -303,7 +283,6 @@ const GameController = (function() {
             }
         }
 
-        // Choose a random empty cell for the computer's move
         if (emptyCells.length > 0) {
             const randomIndex = Math.floor(Math.random() * emptyCells.length);
             const randomMove = emptyCells[randomIndex];
@@ -334,6 +313,7 @@ const GameController = (function() {
 })();
 
 
+/* ScreenController: Manages the user interface, including updating the screen to show the current state of the game, handling user input, and updating the game settings form. */
 const ScreenController = (function() {
     const playerTurnDiv = document.querySelector('#turn');
     const boardDiv = document.querySelector('#board');
