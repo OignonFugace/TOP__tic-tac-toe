@@ -181,6 +181,10 @@ button {
     padding: 4px;
 }
 
+#disclaimer span {
+    font-weight: 700;
+}
+
 /* input[type="text"] { */
 /*     background-color: var(--bg-clr); */
 /*     color: var(--text-clr); */

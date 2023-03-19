@@ -1,5 +1,17 @@
 /* The game starts by initializing the game and updating the screen. Players take turns placing tokens on the board until one of them wins or the board is full, resulting in a tie. The game can be played against a computer, which makes random moves. */
 
+const deepCopyBoard = (board) => {
+    const newBoard = [];
+    for (let i = 0; i < board.length; i++) {
+        newBoard[i] = [];
+        for (let j = 0; j < board[i].length; j++) {
+            newBoard[i][j] = Cell();
+            newBoard[i][j].addToken(board[i][j].getValue());
+        }
+    }
+    return newBoard;
+};
+
 
 /* SettingsController: Manages the game settings and holds the state for the settings' values, such as player names and whether the game is played against a computer. */
 const SettingsController = (function (){
@@ -93,10 +105,74 @@ function ComputerBot() {
     const getToken = () => token;
     const getType = () => type;
 
+     // Implement the Minimax function
+    const minimax = (board, depth, maximizingPlayer) => {
+        if (GameController.checkWinningState(board, 2)) {
+            return 10 - depth;
+        } else if (GameController.checkWinningState(board, 1)) {
+            return -10 + depth;
+        } else if (GameController.checkFullBoard(board)) {
+            return 0;
+        }
+
+        if (maximizingPlayer) {
+            let maxEval = -Infinity;
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board[i].length; j++) {
+                    if (board[i][j].getValue() === 0) {
+                        board[i][j].addToken(token);
+                        let eval = minimax(board, depth + 1, false);
+                        board[i][j].addToken(0);
+                        maxEval = Math.max(maxEval, eval);
+                    }
+                }
+            }
+            return maxEval;
+        } else {
+            let minEval = Infinity;
+            for (let i = 0; i < board.length; i++) {
+                for (let j = 0; j < board[i].length; j++) {
+                    if (board[i][j].getValue() === 0) {
+                        board[i][j].addToken(3 - token);
+                        let eval = minimax(board, depth + 1, true);
+                        board[i][j].addToken(0);
+                        minEval = Math.min(minEval, eval);
+                    }
+                }
+            }
+            return minEval;
+        }
+    };
+
+    const makeBestMove = (board) => {
+        let bestValue = -Infinity;
+        let bestMove = { row: -1, col: -1 };
+
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                if (board[i][j].getValue() === 0) {
+                    board[i][j].addToken(token);
+                    const moveValue = minimax(board, 0, false);
+                    board[i][j].addToken(0);
+
+                    if (moveValue > bestValue) {
+                        bestValue = moveValue;
+                        bestMove = { row: i, col: j };
+                    }
+
+                    console.log({i, j, moveValue});
+                }
+            }
+        }
+
+        return bestMove;
+    };
+
     return Object.assign({
         getName,
         getToken,
         getType,
+        makeBestMove,
     }, prototype);
 }
 
@@ -200,37 +276,49 @@ const GameController = (function() {
     const updatePlayerWinState = () => {
         const token = activePlayer.getToken();
         const board = GameBoard.getBoard();
-        board.forEach(row => {
-            if (token === row[0].getValue() && 
-                row[0].getValue() === row[1].getValue() && 
-                row[1].getValue() === row[2].getValue()) {
-                activePlayer.wins();
-                winningPlayer = activePlayer;
-                return;
-            } 
-        });
-        for (let i = 0 ; i < 3 ; i++) {
-            if (token === board[0][i].getValue() &&
-                board[0][i].getValue() === board[1][i].getValue() &&
-                board[1][i].getValue() === board[2][i].getValue()) {
-                activePlayer.wins();
-                winningPlayer = activePlayer;
-                return;
+
+        if (checkWinningState(board, token)) {
+            activePlayer.wins();
+            winningPlayer = activePlayer;
+            return;
+        }
+    };
+
+    const checkWinningState = (board, token) => {
+        for (let i = 0; i < 3; i++) {
+            if (
+                (board[i][0].getValue() === token &&
+                    board[i][0].getValue() === board[i][1].getValue() &&
+                    board[i][1].getValue() === board[i][2].getValue()) ||
+                (board[0][i].getValue() === token &&
+                    board[0][i].getValue() === board[1][i].getValue() &&
+                    board[1][i].getValue() === board[2][i].getValue())
+            ) {
+                return true;
             }
         }
-        if (token === board[0][0].getValue() &&
-            board[0][0].getValue() === board[1][1].getValue() &&
-            board[1][1].getValue() === board[2][2].getValue()) {
-            activePlayer.wins();
-            winningPlayer = activePlayer;
-            return;
-        } else if (token === board[0][2].getValue() &&
-            board[0][2].getValue() === board[1][1].getValue() &&
-            board[1][1].getValue() === board[2][0].getValue()) {
-            activePlayer.wins();
-            winningPlayer = activePlayer;
-            return;
+        if (
+            (board[0][0].getValue() === token &&
+                board[0][0].getValue() === board[1][1].getValue() &&
+                board[1][1].getValue() === board[2][2].getValue()) ||
+            (board[0][2].getValue() === token &&
+                board[0][2].getValue() === board[1][1].getValue() &&
+                board[1][1].getValue() === board[2][0].getValue())
+        ) {
+            return true;
         }
+        return false;
+    };
+    
+    const checkFullBoard = (board) => {
+        for (let i = 0; i < board.length; i++) {
+            for (let j = 0; j < board[i].length; j++) {
+                if (board[i][j].getValue() === 0) {
+                    return false;
+                }
+            }
+        }
+        return true;
     };
 
     const playRound = (row, col) => {
@@ -273,21 +361,12 @@ const GameController = (function() {
         computerIsPlaying = false;
         resume();
 
-        const board = GameBoard.getBoard();
-        const emptyCells = [];
-        for (let i = 0; i < board.length; i++) {
-            for (let j = 0; j < board[i].length; j++) {
-                if (board[i][j].getValue() === 0) {
-                    emptyCells.push({ row: i, col: j });
-                }
-            }
-        }
+        // Get the board
+        const board = deepCopyBoard(GameBoard.getBoard());
 
-        if (emptyCells.length > 0) {
-            const randomIndex = Math.floor(Math.random() * emptyCells.length);
-            const randomMove = emptyCells[randomIndex];
-            playRound(randomMove.row, randomMove.col);
-        }
+        // Find the best move for the computer
+        const bestMove = activePlayer.makeBestMove(board);
+        playRound(bestMove.row, bestMove.col);
 
         ScreenController.updateScreen();
     };
@@ -296,7 +375,8 @@ const GameController = (function() {
         GameBoard.clearBoard();
         if (winningPlayer) winningPlayer.resetWinningState();
         initializeGame();
-    }
+    };
+
     return {
         playRound,
         getActivePlayer,
@@ -309,6 +389,8 @@ const GameController = (function() {
         resume,
         getPausedState,
         getComputerIsPlaying,
+        checkWinningState,
+        checkFullBoard,
     };
 })();
 
